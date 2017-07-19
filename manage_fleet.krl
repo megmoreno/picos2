@@ -1,4 +1,3 @@
-
 ruleset manage_fleet {
   meta {
     name "Manage Fleet"
@@ -41,11 +40,9 @@ For fleets of vehicles
 	event:send({ "eci": vehicle.eci, "eid": "install-ruleset",
         	"domain": "pico", "type": "new_ruleset",
         	"attrs": { "rid": "track_tips", "vehicle_id": vehicle_id } } )
-
-	event:send({ "eci": eci, "eid": "subscription",
-        	"domain": "wrangler", "type": "subscription",
-        	"attrs": { "name": vehicles{vehicle_id},
-                	"name_space": "cars",
+	event:send({ "eci": eci, "eid": "subscription","domain": "wrangler", "type": "subscription",
+        	"attrs": { "name": ent:vehicles{vehicle_id},
+                	"name_space": "car",
                   	"my_role": "fleet",
                    	"subscriber_role": "vehicle",
                    	"channel_type": "subscription",
@@ -54,7 +51,7 @@ For fleets of vehicles
 		ent:vehicles := ent:vehicles.defaultsTo({});
         	ent:vehicles{vehicle_id} := vehicle
 	}
-        }
+     }
   
 
 
