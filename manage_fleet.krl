@@ -1,12 +1,10 @@
 ruleset manage_fleet {
   meta {
     name "Manage Fleet"
-    description <<
-For fleets of vehicles
->>
     author "Megan Moreno"
     logging on
-    shares vehicles
+    use module Subscriptions
+	shares vehicles
   }
   
   global {
@@ -14,44 +12,49 @@ For fleets of vehicles
       ent:vehicles
     }
   }
-  rule create_vehicle {
+  
+rule create_vehicle {
     select when car new_vehicle
     pre {
 	vehicle_id = event:attr("vehicle_id")
  	exists = ent:vehicles >< vehicle_id
   	eci = meta:eci
     }
-	if exists then
-		send_directive("vehicle_ready", {"vehicle_id":vehicle_id})
-	fired {
-	}else {
+    if exists then
+	send_directive("vehicle_ready", {"vehicle_id":vehicle_id})
+    fired {
+    }else {
     	raise pico event "new_child_request"
       		attributes { "dname": "vehicle_" + vehicle_id, "color": "#FF69B4", "vehicle_id":vehicle_id }
     }
     }
 
-    rule initialize_pico_child {
+    rule pico_child_initialized {
 	select when pico child_initialized
 	pre {
 		vehicle = event:attr("new_child")
 		vehicle_id = event:attr("rs_attrs"){"vehicle_id"}
 		eci = meta:eci
 	}
-	event:send({ "eci": vehicle.eci, "eid": "install-ruleset",
-        	"domain": "pico", "type": "new_ruleset",
-        	"attrs": { "rid": "track_tips", "vehicle_id": vehicle_id } } )
-	event:send({ "eci": eci, "eid": "subscription","domain": "wrangler", "type": "subscription",
-        	"attrs": { "name": ent:vehicles{vehicle_id},
-                	"name_space": "car",
-                  	"my_role": "fleet",
-                   	"subscriber_role": "vehicle",
-                   	"channel_type": "subscription",
-                   	"subscriber_eci": vehicle.eci } } )
+event:send({ "eci": vehicle.eci, "eid": "install-ruleset",
+                "domain": "pico", "type": "new_ruleset",
+                "attrs": { "rid": "track_tips", "vehicle_id": vehicle_id } } )
+        
+
 	fired {
+    raise wrangler event "subscription" attributes
+       { "name" : ent:vehicles{vehicle_id},
+         "name_space" : "car",
+         "my_role" : "fleet",
+         "subscriber_role" :"vehicle",
+         "channel_type" : "subscription",
+         "subscriber_eci" : vehicle.eci
+       };
 		ent:vehicles := ent:vehicles.defaultsTo({});
         	ent:vehicles{vehicle_id} := vehicle
 	}
-     }
+
+          }
   
 
 
@@ -73,3 +76,5 @@ rule delete_car {
     ent:vehicles{[vehicle_id]} := null
   }
 }
+}
+
