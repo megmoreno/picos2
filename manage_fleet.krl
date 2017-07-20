@@ -11,6 +11,16 @@ ruleset manage_fleet {
     vehicles = function(obj) {
       ent:vehicles
     }
+
+    all_trips = function(obj) {
+		Subscriptions:getSubscriptions().filter(function(v){
+                v{"attributes"}{"subscriber_role"} == "vehicle"
+            }).map(function(s){
+                query = http:get("http://localhost:8080/sky/cloud/" + s{"attributes"}{"subscriber_eci"} + "/trip_store/trips");
+                query{"content"}.decode()
+            })
+
+    }
   }
   
 rule create_vehicle {
@@ -76,5 +86,8 @@ rule delete_car {
     ent:vehicles{[vehicle_id]} := null
   }
 }
+
+
+
 }
 
